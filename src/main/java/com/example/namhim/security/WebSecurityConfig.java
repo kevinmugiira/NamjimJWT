@@ -1,5 +1,7 @@
 package com.example.namhim.security;
 
+import com.example.namhim.jwt.JwtTokenFilter;
+import com.example.namhim.jwt.JwtTokenUtil;
 import com.example.namhim.repos.AppUserRepo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -12,6 +14,9 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+
+import javax.servlet.http.HttpServletResponse;
 
 
 @EnableWebSecurity
@@ -19,6 +24,9 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 
     @Autowired
     private AppUserRepo appUserRepo;
+
+    @Autowired
+    private JwtTokenFilter jwtTokenFilter;
 
 
     @Bean
@@ -45,9 +53,20 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
                 .csrf().disable()
                 .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 .and()
+                .exceptionHandling().authenticationEntryPoint(
+                        (request, response, authException) -> {
+                            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, //gives a status 401 unauthorized if user credentials are not authenticated
+                                    authException.getMessage());
+                        }
+                )
+                .and()
                 .authorizeRequests()
-                .anyRequest()
+                .antMatchers("/auth/login")
                 .permitAll()
+                .anyRequest()
+                .authenticated()
+                .and()
+                .addFilterBefore(jwtTokenFilter, UsernamePasswordAuthenticationFilter.class)
         ;
     }
 
