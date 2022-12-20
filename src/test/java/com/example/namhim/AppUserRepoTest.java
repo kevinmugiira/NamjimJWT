@@ -2,6 +2,7 @@ package com.example.namhim;
 
 
 import com.example.namhim.models.AppUser;
+import com.example.namhim.models.Role;
 import com.example.namhim.repos.AppUserRepo;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,5 +34,17 @@ public class AppUserRepoTest {
 
         assertThat(savedUser).isNotNull();
         assertThat(savedUser.getId()).isGreaterThan(0);
+    }
+
+    @Test
+    public void testAssignRolesToUser() {
+        Integer userId = 2;
+
+        AppUser appUser = appUserRepo.findById(userId).get();
+        appUser.addRole(new Role(2));
+        appUser.addRole(new Role(3));
+
+        AppUser updatedUser = appUserRepo.save(appUser);
+        assertThat(updatedUser.getRoles()).hasSize(2);
     }
 }
