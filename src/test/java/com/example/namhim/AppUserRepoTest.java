@@ -26,10 +26,10 @@ public class AppUserRepoTest {
     @Test
     public void testCreateUser() {
         PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
-        String rawPassword = "john2020";
+        String rawPassword = "martin2020";
         String encodedPassword = passwordEncoder.encode(rawPassword);
 
-        AppUser newUser = new AppUser("john@gmail.com", encodedPassword);
+        AppUser newUser = new AppUser("martin@gmail.com", encodedPassword);
         AppUser savedUser = appUserRepo.save(newUser);
 
         assertThat(savedUser).isNotNull();
@@ -38,7 +38,7 @@ public class AppUserRepoTest {
 
     @Test
     public void testAssignRolesToUser() {
-        Integer userId = 2;
+        Integer userId = 3;
 
         AppUser appUser = appUserRepo.findById(userId).get();
         appUser.addRole(new Role(2));

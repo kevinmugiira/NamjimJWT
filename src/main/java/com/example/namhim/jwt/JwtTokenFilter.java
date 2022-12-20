@@ -1,6 +1,8 @@
 package com.example.namhim.jwt;
 
 import com.example.namhim.models.AppUser;
+import com.example.namhim.models.Role;
+import io.jsonwebtoken.Claims;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -45,16 +47,33 @@ public class JwtTokenFilter extends OncePerRequestFilter {
         filterChain.doFilter(request, response);
     }
 
+    //authenticating a token instance and using the user's credentials to confirm
     private void setAuhtenticationContext(String accessToken, HttpServletRequest request) {
         UserDetails userDetails = getUserDetails(accessToken);
-        UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(userDetails, null, null);
+        UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
         authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
 
         SecurityContextHolder.getContext().setAuthentication(authentication);
     }
+
+    //grabing the user's credentials and attaching them to the token
     private UserDetails getUserDetails(String accessToken) {
         AppUser userDetails = new AppUser();
-        String[] subjectArray = jwtTokenUtil.getSubject(accessToken).split(",");
+        Claims claims = jwtTokenUtil.parseClaims(accessToken);
+
+        String claimRoles = (String) claims.get("roles");
+        claimRoles = claimRoles.replace("[", "").replace("]","");
+
+        System.out.println("claimRoles: " + claimRoles);
+
+        String[] roleNames = claimRoles.split(",");
+
+        for (String aRoleName : roleNames) {
+            userDetails.addRole(new Role(aRoleName));
+        }
+
+        String subject = (String) claims.get(Claims.SUBJECT);
+        String[] subjectArray = subject.split(",");
 
         userDetails.setId(Integer.parseInt(subjectArray[0]));
         userDetails.setEmail(subjectArray[1]);
@@ -73,6 +92,7 @@ public class JwtTokenFilter extends OncePerRequestFilter {
         return true;
     }
 
+    //retrieving the jwt from the header and the trimming it into the accesstoken
     private String getAccessToken(HttpServletRequest request) {
         String header = request.getHeader("Authorization");
         String token = header.split(" ")[1].trim();

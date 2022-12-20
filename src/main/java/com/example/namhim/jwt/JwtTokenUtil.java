@@ -24,6 +24,7 @@ public class JwtTokenUtil {
     public String GenerateAccessToken(AppUser appUser) {
         return Jwts.builder()
                 .setSubject(appUser.getId() + "," + appUser.getEmail())
+                .claim("roles", appUser.getRoles().toString())
                 .setIssuer("Mugiira")
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + EXPIRE_DURATION))
@@ -58,7 +59,7 @@ public class JwtTokenUtil {
     }
 
     //going through the token's claims and retrieving them which are then passed to the getSubject method above
-    private Claims parseClaims(String token) {
+    public Claims parseClaims(String token) {
         return Jwts.parser()
                 .setSigningKey(secretKey)
                 .parseClaimsJws(token)
